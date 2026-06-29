@@ -165,31 +165,6 @@ def generate_reply(model, text, max_len=10):
 # ---------------------------------------------------------
 app = Flask(__name__)
 
-HTML_PAGE = """
-<!doctype html>
-<html>
-<head>
-    <title>PyTorch Chatbot</title>
-    <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; }
-        .msg-user { color: #1e88e5; }
-        .msg-bot { color: #43a047; }
-    </style>
-</head>
-<body>
-    <h1>PyTorch Chatbot with Attention</h1>
-    <form method="POST">
-        <input type="text" name="message" style="width:80%%" autofocus>
-        <button type="submit">Send</button>
-    </form>
-    {% if user_msg %}
-        <p class="msg-user"><b>You:</b> {{ user_msg }}</p>
-        <p class="msg-bot"><b>Bot:</b> {{ bot_msg }}</p>
-    {% endif %}
-</body>
-</html>
-"""
-
 @app.route("/", methods=["GET", "POST"])
 def index():
     user_msg = None
@@ -198,7 +173,7 @@ def index():
         user_msg = request.form.get("message", "").strip().lower()
         if user_msg:
             bot_msg = generate_reply(model, user_msg)
-    return render_template_string(HTML_PAGE, user_msg=user_msg, bot_msg=bot_msg)
+    return render_template("chat.htm", user_msg=user_msg, bot_msg=bot_msg)
 
 @app.route("/api/chat", methods=["POST"])
 def api_chat():
