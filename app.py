@@ -2,7 +2,6 @@ import json
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from flask import Flask, request, render_template_string, jsonify
 
 # ---------------------------------------------------------
 # 1. Load training data from JSON
@@ -161,27 +160,11 @@ def generate_reply(model, text, max_len=10):
 
 
 # ---------------------------------------------------------
-# 10. Flask app
+# 10. Example usage (no Flask)
 # ---------------------------------------------------------
-app = Flask(__name__)
-
-@app.route("/", methods=["GET", "POST"])
-def index():
-    user_msg = None
-    bot_msg = None
-    if request.method == "POST":
-        user_msg = request.form.get("message", "").strip().lower()
-        if user_msg:
-            bot_msg = generate_reply(model, user_msg)
-    return render_template("chat.htm", user_msg=user_msg, bot_msg=bot_msg)
-
-@app.route("/api/chat", methods=["POST"])
-def api_chat():
-    data = request.get_json(force=True)
-    msg = data.get("message", "").strip().lower()
-    reply = generate_reply(model, msg) if msg else ""
-    return jsonify({"reply": reply})
-
-
 if __name__ == "__main__":
-    app.run(debug=True)
+    while True:
+        msg = input("You: ").strip().lower()
+        if msg in ("quit", "exit"):
+            break
+        print("Rexo:", generate_reply(model, msg))
