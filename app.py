@@ -1,8 +1,12 @@
 import json
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from flask import Flask, request, render_template_string, jsonify
+
+import tkinter as tk
+from tkinter import scrolledtext
+
 
 # ---------------------------------------------------------
 # 1. Load training data from JSON
@@ -159,29 +163,62 @@ def generate_reply(model, text, max_len=10):
         input_token = torch.tensor([next_id])
     return " ".join(output_words)
 
+# ---------------------------------------------------------
+# REXO TKINTER GUI
+# ---------------------------------------------------------
+
+class RexoGUI:
+    def __init__(self, model):
+        self.model = model
+
+        self.root = tk.Tk()
+        self.root.title("Rexo Chatbot")
+        self.root.geometry("500x600")
+
+        # Chat display
+        self.chat_box = scrolledtext.ScrolledText(
+            self.root, wrap=tk.WORD, font=("Consolas", 12)
+        )
+        self.chat_box.pack(expand=True, fill="both", padx=10, pady=10)
+        self.chat_box.config(state=tk.DISABLED)
+
+        # Input field
+        self.entry = tk.Entry(self.root, font=("Consolas", 12))
+        self.entry.pack(fill="x", padx=10, pady=(0, 10))
+        self.entry.bind("<Return>", self.send_message)
+
+        # Send button
+        send_btn = tk.Button(self.root, text="Send", command=self.send_message)
+        send_btn.pack(pady=(0, 10))
+
+    def send_message(self, event=None):
+        user_msg = self.entry.get().strip().lower()
+        if not user_msg:
+            return
+
+        # Display user message
+        self._append_chat(f"You: {user_msg}")
+
+        # Generate reply
+        bot_msg = generate_reply(self.model, user_msg)
+        self._append_chat(f"Rexo: {bot_msg}")
+
+        self.entry.delete(0, tk.END)
+
+    def _append_chat(self, text):
+        self.chat_box.config(state=tk.NORMAL)
+        self.chat_box.insert(tk.END, text + "\n\n")
+        self.chat_box.config(state=tk.DISABLED)
+        self.chat_box.yview(tk.END)
+
+    def run(self):
+        self.root.mainloop()
+
 
 # ---------------------------------------------------------
-# 10. Flask app
+# Launch GUI
 # ---------------------------------------------------------
-app = Flask(__name__)
-
-@app.route("/", methods=["GET", "POST"])
-def index():
-    user_msg = None
-    bot_msg = None
-    if request.method == "POST":
-        user_msg = request.form.get("message", "").strip().lower()
-        if user_msg:
-            bot_msg = generate_reply(model, user_msg)
-    return render_template("chat.htm", user_msg=user_msg, bot_msg=bot_msg)
-
-@app.route("/api/chat", methods=["POST"])
-def api_chat():
-    data = request.get_json(force=True)
-    msg = data.get("message", "").strip().lower()
-    reply = generate_reply(model, msg) if msg else ""
-    return jsonify({"reply": reply})
-
-
 if __name__ == "__main__":
-    app.run(debug=True)
+    gui = RexoGUI(model)
+    gui.run()
+
